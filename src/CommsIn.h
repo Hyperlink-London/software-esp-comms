@@ -1,9 +1,12 @@
 #ifndef COMMS_IN_H
 #define COMMS_IN_H
 
-class CommsIn {
+#include <Arduino.h>
+#include <CommsInInterface.h>  // From interfaces submodule
+
+class CommsIn : public CommsInInterface {
 public:
-    void receive();  // placeholder
+    void receive() override;
 };
 
 #endif
