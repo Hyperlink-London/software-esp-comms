@@ -14,6 +14,8 @@ void CommsIn::receive() {
             
             // Try to parse the JSON
             DeserializationError error = deserializeJson(doc, message);
+
+            lastReciveTime = millis();
             
             if (error) {
                 Serial_1.print("Error: Incomplete or invalid JSON message - ");
@@ -23,5 +25,15 @@ void CommsIn::receive() {
                 Serial_1.println(message);
             }
         }
+    }
+}
+
+// TODO: implement this
+bool CommsIn::isStale() {
+    if (lastReciveTime > MAX_SILENT_PERIOD_MS) {
+        // do something
+        return true;
+    } else {
+        return false;
     }
 }
