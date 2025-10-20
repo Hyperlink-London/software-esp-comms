@@ -1,10 +1,11 @@
 #include "CommsIn.h"
 #include <Arduino.h>
+#include <SerialAliases.h>
 #include <ArduinoJson.h>
 
 void CommsIn::receive() {
-    if (Serial.available() > 0) {
-        String message = Serial.readStringUntil('\n');
+    if (Serial_1.available() > 0) {
+        String message = Serial_1.readStringUntil('\n');
         message.trim(); // Remove any whitespace
         
         if (message.length() > 0) {
@@ -15,11 +16,11 @@ void CommsIn::receive() {
             DeserializationError error = deserializeJson(doc, message);
             
             if (error) {
-                Serial.print("Error: Incomplete or invalid JSON message - ");
-                Serial.println(error.c_str());
+                Serial_1.print("Error: Incomplete or invalid JSON message - ");
+                Serial_1.println(error.c_str());
             } else {
-                Serial.print("Received valid JSON message: ");
-                Serial.println(message);
+                Serial_1.print("Received valid JSON message: ");
+                Serial_1.println(message);
             }
         }
     }

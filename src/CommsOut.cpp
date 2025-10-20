@@ -1,12 +1,50 @@
 #include "CommsOut.h"
+#include <Arduino.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include <SerialAliases.h>
+
+typedef struct {
+    char sensor[32];
+    float value;
+} OutboundMsgInternal;
+
+static QueueHandle_t s_outboundQueue = NULL;
 
 CommsOut::CommsOut()
-    : espId("UNKNOWN") {}
+    : espId("UNKNOWN") {
+    if (s_outboundQueue == NULL) {
+        s_outboundQueue = xQueueCreate(32, sizeof(OutboundMsgInternal));
+    }
+}
 
 CommsOut::CommsOut(const String& id)
-    : espId(id) {}
+    : espId(id) {
+    if (s_outboundQueue == NULL) {
+        s_outboundQueue = xQueueCreate(32, sizeof(OutboundMsgInternal));
+    }
+}
 
     void CommsOut::send(const String& sensorName, float value) {
-        Serial.printf("{\"espId\": \"%s\", \"sensor\": \"%s\", \"value\": %.2f}\n",
-                      espId.c_str(), sensorName.c_str(), value);
+        if (xPortGetCoreID() == 1 || s_outboundQueue == NULL) {
+            Serial_1.printf("{\"espId\": \"%s\", \"sensor\": \"%s\", \"value\": %.2f}\n",
+                            espId.c_str(), sensorName.c_str(), value);
+            return;
+        }
+        OutboundMsgInternal msg;
+        strncpy(msg.sensor, sensorName.c_str(), sizeof(msg.sensor) - 1);
+        msg.sensor[sizeof(msg.sensor) - 1] = '\0';
+        msg.value = value;
+        xQueueSend(s_outboundQueue, &msg, 0);
+    }
+
+    
+
+    void CommsOut::drainQueue() {
+        if (s_outboundQueue == NULL) return;
+        OutboundMsgInternal msg;
+        while (xQueueReceive(s_outboundQueue, &msg, 0) == pdTRUE) {
+            Serial_1.printf("{\"espId\": \"%s\", \"sensor\": \"%s\", \"value\": %.2f}\n",
+                            espId.c_str(), msg.sensor, msg.value);
+        }
     }

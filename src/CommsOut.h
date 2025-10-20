@@ -2,7 +2,7 @@
 #define COMMS_OUT_H
 
 #include <Arduino.h>
-#include <CommsOutInterface.h>  // From interfaces submodule
+#include <CommsOutInterface.h>
 
 class CommsOut : public CommsOutInterface {
 private:
@@ -13,6 +13,7 @@ public:
     CommsOut(const String& id);
 
     void send(const String& sensorName, float value) override;
+    void drainQueue();
 };
 
 #endif

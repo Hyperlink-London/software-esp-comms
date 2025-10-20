@@ -2,7 +2,7 @@
 #define COMMS_IN_H
 
 #include <Arduino.h>
-#include <CommsInInterface.h>  // From interfaces submodule
+#include <CommsInInterface.h>
 
 class CommsIn : public CommsInInterface {
 public:
