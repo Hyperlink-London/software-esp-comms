@@ -24,7 +24,7 @@ CommsOut::CommsOut(const String& id)
         s_outboundQueue = xQueueCreate(32, sizeof(OutboundMsgInternal));
     }
 }
-
+    // TODO: rename this and abstract out the serial printing.  current implementation by me is dumb and confusing.
     void CommsOut::send(const String& sensorName, float value) {
         if (xPortGetCoreID() == 1 || s_outboundQueue == NULL) {
             Serial_1.printf("{\"espId\": \"%s\", \"sensor\": \"%s\", \"value\": %.2f}\n",
