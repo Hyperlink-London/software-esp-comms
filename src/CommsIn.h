@@ -4,8 +4,11 @@
 #include <Arduino.h>
 #include <CommsInInterface.h>
 
-// Forward declaration for command handler function type
-typedef void (*CommandHandler)();
+// Forward declaration
+class CommsOut;
+
+// Forward declaration for command handler function type (returns bool for success/failure)
+typedef bool (*CommandHandler)();
 
 // Structure to map command strings to handler functions
 struct CommandMap {
@@ -20,6 +23,7 @@ private:
     String espId;
     CommandMap* commandMap;
     size_t commandMapSize;
+    CommsOut* commsOut;  // Reference to CommsOut for sending ACKs
 
     // Internal methods
     bool validateEspId(const String& receivedEspId);
@@ -30,12 +34,15 @@ public:
     CommsIn();
     CommsIn(const String& id);
     CommsIn(const String& id, CommandMap* commands, size_t commandCount);
+    CommsIn(const String& id, CommandMap* commands, size_t commandCount, CommsOut* commsOut);
     
     void receive() override;
     bool isStale();
     
     // Method to set command map after construction
     void setCommandMap(CommandMap* commands, size_t commandCount);
+    // Method to set CommsOut reference for ACK messages
+    void setCommsOut(CommsOut* commsOut);
 };
 
 #endif

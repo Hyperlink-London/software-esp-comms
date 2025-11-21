@@ -15,6 +15,7 @@ public:
     void send(const String& sensorName, float value) override;
     void drainQueue();
     void print(const String& sensorName, float value);
+    void sendAck(const String& command, bool success);
 };
 
 #endif

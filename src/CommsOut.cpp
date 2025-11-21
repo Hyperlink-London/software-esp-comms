@@ -50,3 +50,8 @@ void CommsOut::print(const String& sensorName, float value) {
     Serial_1.printf("{\"espId\": \"%s\", \"sensor\": \"%s\", \"value\": %.2f}\n",
         espId.c_str(), sensorName.c_str(), value);
 }
+
+void CommsOut::sendAck(const String& command, bool success) {
+    Serial_1.printf("{\"espId\": \"%s\", \"ack\": %s, \"command\": \"%s\"}\n",
+        espId.c_str(), success ? "true" : "false", command.c_str());
+}

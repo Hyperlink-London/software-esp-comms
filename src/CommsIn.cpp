@@ -2,26 +2,37 @@
 #include <Arduino.h>
 #include <SerialAliases.h>
 #include <ArduinoJson.h>
+#include "CommsOut.h"
 
 // Constructor without ESP ID (defaults to "UNKNOWN")
 CommsIn::CommsIn() 
-    : espId("UNKNOWN"), commandMap(nullptr), commandMapSize(0), lastReciveTime(0) {
+    : espId("UNKNOWN"), commandMap(nullptr), commandMapSize(0), lastReciveTime(0), commsOut(nullptr) {
 }
 
 // Constructor with ESP ID
 CommsIn::CommsIn(const String& id)
-    : espId(id), commandMap(nullptr), commandMapSize(0), lastReciveTime(0) {
+    : espId(id), commandMap(nullptr), commandMapSize(0), lastReciveTime(0), commsOut(nullptr) {
 }
 
 // Constructor with ESP ID and command map
 CommsIn::CommsIn(const String& id, CommandMap* commands, size_t commandCount)
-    : espId(id), commandMap(commands), commandMapSize(commandCount), lastReciveTime(0) {
+    : espId(id), commandMap(commands), commandMapSize(commandCount), lastReciveTime(0), commsOut(nullptr) {
+}
+
+// Constructor with ESP ID, command map, and CommsOut reference
+CommsIn::CommsIn(const String& id, CommandMap* commands, size_t commandCount, CommsOut* commsOut)
+    : espId(id), commandMap(commands), commandMapSize(commandCount), lastReciveTime(0), commsOut(commsOut) {
 }
 
 // Set command map after construction
 void CommsIn::setCommandMap(CommandMap* commands, size_t commandCount) {
     commandMap = commands;
     commandMapSize = commandCount;
+}
+
+// Set CommsOut reference for ACK messages
+void CommsIn::setCommsOut(CommsOut* commsOut) {
+    this->commsOut = commsOut;
 }
 
 // Validate that the received ESP ID matches this ESP's ID
@@ -49,10 +60,31 @@ void CommsIn::executeCommand(const String& command) {
     CommandHandler handler = findCommandHandler(command);
     
     if (handler != nullptr) {
-        handler();
-        Serial_1.printf("Command executed: %s\n", command.c_str());
+        bool success = handler();
+        
+        // Send ACK back to OBC
+        if (commsOut != nullptr) {
+            commsOut->sendAck(command, success);
+        } else {
+            // Fallback to direct serial if CommsOut not set
+            Serial_1.printf("{\"espId\": \"%s\", \"ack\": %s, \"command\": \"%s\"}\n",
+                espId.c_str(), success ? "true" : "false", command.c_str());
+        }
+        
+        if (success) {
+            Serial_1.printf("Command executed: %s\n", command.c_str());
+        } else {
+            Serial_1.printf("Command failed: %s\n", command.c_str());
+        }
     } else {
         Serial_1.printf("Error: Unknown command - %s\n", command.c_str());
+        // Send ACK for unknown command (failure)
+        if (commsOut != nullptr) {
+            commsOut->sendAck(command, false);
+        } else {
+            Serial_1.printf("{\"espId\": \"%s\", \"ack\": false, \"command\": \"%s\"}\n",
+                espId.c_str(), command.c_str());
+        }
     }
 }
 
